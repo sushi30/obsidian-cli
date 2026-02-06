@@ -12,6 +12,7 @@ type MockVaultOperator struct {
 	DailyNotePatternErr  error
 	Name                 string
 	DailyPattern         string
+	VaultPath            string
 }
 
 func (m *MockVaultOperator) DefaultName() (string, error) {
@@ -31,6 +32,9 @@ func (m *MockVaultOperator) SetDefaultName(_ string) error {
 func (m *MockVaultOperator) Path() (string, error) {
 	if m.PathError != nil {
 		return "", m.PathError
+	}
+	if m.VaultPath != "" {
+		return m.VaultPath, nil
 	}
 	return "path", nil
 }

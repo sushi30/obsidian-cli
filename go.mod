@@ -12,6 +12,7 @@ require (
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/adrg/frontmatter v0.2.0 // indirect
+	github.com/bmatcuk/doublestar/v4 v4.10.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
 	github.com/gdamore/tcell/v2 v2.7.4 // indirect

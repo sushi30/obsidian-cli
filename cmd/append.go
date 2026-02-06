@@ -24,7 +24,8 @@ Examples:
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		vault := obsidian.Vault{Name: vaultName}
-		noteName, err := ResolveNoteName(&vault, args[0])
+		originalNoteName := args[0]
+		noteName, err := ResolveNoteName(&vault, originalNoteName)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -38,7 +39,7 @@ Examples:
 
 		output, err := actions.AppendToNote(&vault, &note, params)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(WrapDailyNoteError(originalNoteName, err))
 		}
 
 		fmt.Println(output)

@@ -19,14 +19,15 @@ var OpenVaultCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		vault := obsidian.Vault{Name: vaultName}
 		uri := obsidian.Uri{}
-		noteName, err := ResolveNoteName(&vault, args[0])
+		originalNoteName := args[0]
+		noteName, err := ResolveNoteName(&vault, originalNoteName)
 		if err != nil {
 			log.Fatal(err)
 		}
 		params := actions.OpenParams{NoteName: noteName, Section: sectionName, CreateIfNotExist: createIfNotExist}
 		err = actions.OpenNote(&vault, &uri, params)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(WrapDailyNoteError(originalNoteName, err))
 		}
 	},
 }

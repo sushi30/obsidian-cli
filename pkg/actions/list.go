@@ -5,7 +5,8 @@ import (
 )
 
 type ListParams struct {
-	Path string
+	Path     string
+	FullPath bool
 }
 
 func ListEntries(vault obsidian.VaultManager, params ListParams) ([]string, error) {
@@ -19,5 +20,25 @@ func ListEntries(vault obsidian.VaultManager, params ListParams) ([]string, erro
 		return nil, err
 	}
 
-	return obsidian.ListEntries(vaultPath, params.Path)
+	var entries []string
+	if obsidian.ContainsGlob(params.Path) {
+		entries, err = obsidian.GlobEntries(vaultPath, params.Path)
+	} else {
+		entries, err = obsidian.ListEntries(vaultPath, params.Path)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if params.FullPath {
+		basePath := vaultPath
+		if params.Path != "" && !obsidian.ContainsGlob(params.Path) {
+			basePath = vaultPath + "/" + params.Path
+		}
+		for i, entry := range entries {
+			entries[i] = basePath + "/" + entry
+		}
+	}
+
+	return entries, nil
 }

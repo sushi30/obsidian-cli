@@ -175,7 +175,7 @@ obsidian-cli search-content "search term" --editor
 
 ### List Vault Contents
 
-Lists files and folders in a vault path. If no path is provided, it lists the vault root.
+Lists files and folders in a vault path. If no path is provided, it lists the vault root. Supports glob patterns with `*` (single directory) and `**` (recursive).
 
 ```bash
 # Lists vault root
@@ -186,6 +186,18 @@ obsidian-cli list "001 Notes"
 
 # Lists contents of a subfolder in specified vault
 obsidian-cli list "001 Notes" --vault "{vault-name}"
+
+# Display full vault paths
+obsidian-cli list --full-path
+
+# List all markdown files in vault root
+obsidian-cli list "*.md"
+
+# List all markdown files recursively
+obsidian-cli list "**/*.md"
+
+# Combine with --full-path for scripting
+obsidian-cli list "**/*.md" --full-path
 
 ```
 
@@ -207,7 +219,7 @@ obsidian-cli print "{note-name}" --vault "{vault-name}"
 
 ### Create / Update Note
 
-Creates note (can also be a path with name) in vault. By default, if the note exists, it will create another note but passing `--overwrite` or `--append` can be used to edit the named note.
+Creates note (can also be a path with name) in vault. By default, if the note exists, it will create another note but passing `--overwrite` or `--append` can be used to edit the named note. Content can be provided via the `--content` flag or piped through stdin.
 
 ```bash
 # Creates empty note in default obsidian and opens it
@@ -230,6 +242,18 @@ obsidian-cli create "{note-name}" --content "abcde" --open
 
 # Creates note and opens it in your default editor
 obsidian-cli create "{note-name}" --content "abcde" --open --editor
+
+# Creates note from stdin (piped content)
+echo "Hello World" | obsidian-cli create "{note-name}"
+
+# Pipe file contents into a note
+cat document.txt | obsidian-cli create "{note-name}"
+
+# Pipe command output into a note
+git log --oneline -10 | obsidian-cli create "git-log.md"
+
+# Combine with other tools
+curl -s https://example.com/api | jq '.data' | obsidian-cli create "api-response.md"
 
 ```
 

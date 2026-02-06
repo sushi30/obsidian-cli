@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go test:*)",
+      "Bash(go build:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git push:*)",
+      "Bash(./obsidian-cli create:*)",
+      "Bash(go get:*)",
+      "Bash(go mod vendor:*)",
+      "Bash(./obsidian-cli list:*)",
+      "Bash(./obs-test c:*)",
+      "Bash(./build/obsidian c test:*)",
+      "Bash(./build/obsidian print:*)"
+    ]
+  }
+}

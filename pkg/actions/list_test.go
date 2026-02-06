@@ -101,4 +101,69 @@ func TestListEntries(t *testing.T) {
 		_, err := actions.ListEntries(vault, actions.ListParams{})
 		assert.Equal(t, vault.pathErr, err)
 	})
+
+	t.Run("List with full path at vault root", func(t *testing.T) {
+		vaultDir := t.TempDir()
+
+		err := os.WriteFile(filepath.Join(vaultDir, "Notes.md"), []byte(""), 0644)
+		assert.NoError(t, err)
+
+		vault := &vaultStub{path: vaultDir}
+		entries, err := actions.ListEntries(vault, actions.ListParams{FullPath: true})
+		assert.NoError(t, err)
+		assert.Equal(t, []string{vaultDir + "/Notes.md"}, entries)
+	})
+
+	t.Run("List with full path in subdirectory", func(t *testing.T) {
+		vaultDir := t.TempDir()
+		subDir := filepath.Join(vaultDir, "Projects")
+		assert.NoError(t, os.Mkdir(subDir, 0755))
+		assert.NoError(t, os.WriteFile(filepath.Join(subDir, "Todo.md"), []byte(""), 0644))
+
+		vault := &vaultStub{path: vaultDir}
+		entries, err := actions.ListEntries(vault, actions.ListParams{Path: "Projects", FullPath: true})
+		assert.NoError(t, err)
+		assert.Equal(t, []string{vaultDir + "/Projects/Todo.md"}, entries)
+	})
+
+	t.Run("Glob pattern with * matches files", func(t *testing.T) {
+		vaultDir := t.TempDir()
+		assert.NoError(t, os.WriteFile(filepath.Join(vaultDir, "notes.md"), []byte(""), 0644))
+		assert.NoError(t, os.WriteFile(filepath.Join(vaultDir, "ideas.md"), []byte(""), 0644))
+		assert.NoError(t, os.WriteFile(filepath.Join(vaultDir, "readme.txt"), []byte(""), 0644))
+
+		vault := &vaultStub{path: vaultDir}
+		entries, err := actions.ListEntries(vault, actions.ListParams{Path: "*.md"})
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"ideas.md", "notes.md"}, entries)
+	})
+
+	t.Run("Glob pattern with ** matches recursively", func(t *testing.T) {
+		vaultDir := t.TempDir()
+		subDir := filepath.Join(vaultDir, "Projects")
+		assert.NoError(t, os.Mkdir(subDir, 0755))
+		assert.NoError(t, os.WriteFile(filepath.Join(vaultDir, "root.md"), []byte(""), 0644))
+		assert.NoError(t, os.WriteFile(filepath.Join(subDir, "project.md"), []byte(""), 0644))
+
+		vault := &vaultStub{path: vaultDir}
+		entries, err := actions.ListEntries(vault, actions.ListParams{Path: "**/*.md"})
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"Projects/project.md", "root.md"}, entries)
+	})
+
+	t.Run("Glob with full path", func(t *testing.T) {
+		vaultDir := t.TempDir()
+		assert.NoError(t, os.WriteFile(filepath.Join(vaultDir, "note.md"), []byte(""), 0644))
+
+		vault := &vaultStub{path: vaultDir}
+		entries, err := actions.ListEntries(vault, actions.ListParams{Path: "*.md", FullPath: true})
+		assert.NoError(t, err)
+		assert.Equal(t, []string{vaultDir + "/note.md"}, entries)
+	})
+
+	t.Run("Glob rejects path traversal", func(t *testing.T) {
+		vault := &vaultStub{path: t.TempDir()}
+		_, err := actions.ListEntries(vault, actions.ListParams{Path: "../*.md"})
+		assert.ErrorIs(t, err, obsidian.ErrPathTraversal)
+	})
 }
