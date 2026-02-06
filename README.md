@@ -1,3 +1,5 @@
+Forked from https://github.com/Yakitrak/obsidian-cli/tree/f923c415cdea494bebc4e9a5b2d5561fdb566ed1
+
 # Obsidian CLI
 
 ---
@@ -108,9 +110,14 @@ Then you can use `obs_cd` to navigate to the default vault directory within your
 
 Open given note name in Obsidian. Note can also be an absolute path from top level of vault.
 
+Use `@daily` as the note name to open today's daily note.
+
 ```bash
 # Opens note in obsidian vault
 obsidian-cli open "{note-name}"
+
+# Opens today's daily note
+obsidian-cli open @daily
 
 # Opens note in specified obsidian vault
 obsidian-cli open "{note-name}" --vault "{vault-name}"
@@ -272,6 +279,25 @@ obsidian-cli frontmatter "{note-name}" --delete --key "draft"
 
 # Use with a specific vault
 obsidian-cli frontmatter "{note-name}" --print --vault "{vault-name}"
+```
+
+### Recipes
+
+Shell pipelines combining obsidian-cli commands with standard Unix tools.
+
+#### In-place Text Replacement
+
+Replace text in a note using `sed`:
+
+```bash
+# Replace first occurrence of "old" with "new"
+obsidian-cli create "note.md" --overwrite --content "$(obsidian-cli print "note.md" | sed 's/old/new/')"
+
+# Replace all occurrences (global)
+obsidian-cli create "note.md" --overwrite --content "$(obsidian-cli print "note.md" | sed 's/old/new/g')"
+
+# Use regex patterns
+obsidian-cli create "note.md" --overwrite --content "$(obsidian-cli print "note.md" | sed -E 's/[0-9]+/NUMBER/g')"
 ```
 
 ## Contribution

@@ -13,12 +13,15 @@ var content string
 var createNoteCmd = &cobra.Command{
 	Use:     "create",
 	Aliases: []string{"c"},
-	Short:   "Creates note in vault",
+	Short:   "Creates note in vault (use @daily for daily note)",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		vault := obsidian.Vault{Name: vaultName}
 		uri := obsidian.Uri{}
-		noteName := args[0]
+		noteName, err := ResolveNoteName(&vault, args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
 		useEditor, err := cmd.Flags().GetBool("editor")
 		if err != nil {
 			log.Fatalf("Failed to parse --editor flag: %v", err)

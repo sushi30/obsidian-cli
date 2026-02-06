@@ -65,4 +65,18 @@ func TestOpenNote(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "note.md#Section Name", uri.LastParams["file"])
 	})
+
+	t.Run("Creates note if not exist then opens", func(t *testing.T) {
+		vault := mocks.MockVaultOperator{Name: "myVault"}
+		uri := mocks.MockUriManager{}
+
+		err := actions.OpenNote(&vault, &uri, actions.OpenParams{
+			NoteName:         "note.md",
+			CreateIfNotExist: true,
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, "myVault", uri.LastParams["vault"])
+		assert.Equal(t, "note.md", uri.LastParams["file"])
+	})
 }

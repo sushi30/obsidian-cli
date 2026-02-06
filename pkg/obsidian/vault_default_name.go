@@ -3,6 +3,8 @@ package obsidian
 import (
 	"encoding/json"
 	"errors"
+	"time"
+
 	"github.com/Yakitrak/obsidian-cli/pkg/config"
 	"os"
 )
@@ -72,4 +74,67 @@ func (v *Vault) SetDefaultName(name string) error {
 	v.Name = name
 
 	return nil
+}
+
+func (v *Vault) SetDailyNotePattern(pattern string) error {
+	obsConfigDir, obsConfigFile, err := CliConfigPath()
+	if err != nil {
+		return err
+	}
+
+	// Read existing config to preserve other fields
+	cliConfig := CliConfig{}
+	if content, err := os.ReadFile(obsConfigFile); err == nil {
+		json.Unmarshal(content, &cliConfig)
+	}
+
+	cliConfig.DailyNotePattern = pattern
+
+	jsonContent, err := JsonMarshal(cliConfig)
+	if err != nil {
+		return errors.New(ObsidianCLIConfigGenerateJSONError)
+	}
+
+	err = os.MkdirAll(obsConfigDir, os.ModePerm)
+	if err != nil {
+		return errors.New(ObsidianCLIConfigDirWriteEror)
+	}
+
+	err = os.WriteFile(obsConfigFile, jsonContent, 0644)
+	if err != nil {
+		return errors.New(ObsidianCLIConfigWriteError)
+	}
+
+	return nil
+}
+
+func (v *Vault) DailyNotePattern() (string, error) {
+	_, cliConfigFile, err := CliConfigPath()
+	if err != nil {
+		return "", err
+	}
+
+	content, err := os.ReadFile(cliConfigFile)
+	if err != nil {
+		return "", errors.New(ObsidianCLIDailyPatternNotConfigured)
+	}
+
+	cliConfig := CliConfig{}
+	if err = json.Unmarshal(content, &cliConfig); err != nil {
+		return "", errors.New(ObsidianCLIConfigParseError)
+	}
+
+	if cliConfig.DailyNotePattern == "" {
+		return "", errors.New(ObsidianCLIDailyPatternNotConfigured)
+	}
+
+	return cliConfig.DailyNotePattern, nil
+}
+
+func (v *Vault) ResolveDailyNote() (string, error) {
+	pattern, err := v.DailyNotePattern()
+	if err != nil {
+		return "", err
+	}
+	return ExpandDatePattern(pattern, time.Now()), nil
 }
