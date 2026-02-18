@@ -1,3 +1,5 @@
+Forked from https://github.com/Yakitrak/obsidian-cli/tree/f923c415cdea494bebc4e9a5b2d5561fdb566ed1
+
 # Obsidian CLI
 
 ---
@@ -108,9 +110,14 @@ Then you can use `obs_cd` to navigate to the default vault directory within your
 
 Open given note name in Obsidian. Note can also be an absolute path from top level of vault.
 
+Use `@daily` as the note name to open today's daily note.
+
 ```bash
 # Opens note in obsidian vault
 obsidian-cli open "{note-name}"
+
+# Opens today's daily note
+obsidian-cli open @daily
 
 # Opens note in specified obsidian vault
 obsidian-cli open "{note-name}" --vault "{vault-name}"
@@ -168,7 +175,7 @@ obsidian-cli search-content "search term" --editor
 
 ### List Vault Contents
 
-Lists files and folders in a vault path. If no path is provided, it lists the vault root.
+Lists files and folders in a vault path. If no path is provided, it lists the vault root. Supports glob patterns with `*` (single directory) and `**` (recursive).
 
 ```bash
 # Lists vault root
@@ -179,6 +186,18 @@ obsidian-cli list "001 Notes"
 
 # Lists contents of a subfolder in specified vault
 obsidian-cli list "001 Notes" --vault "{vault-name}"
+
+# Display full vault paths
+obsidian-cli list --full-path
+
+# List all markdown files in vault root
+obsidian-cli list "*.md"
+
+# List all markdown files recursively
+obsidian-cli list "**/*.md"
+
+# Combine with --full-path for scripting
+obsidian-cli list "**/*.md" --full-path
 
 ```
 
@@ -200,7 +219,7 @@ obsidian-cli print "{note-name}" --vault "{vault-name}"
 
 ### Create / Update Note
 
-Creates note (can also be a path with name) in vault. By default, if the note exists, it will create another note but passing `--overwrite` or `--append` can be used to edit the named note.
+Creates note (can also be a path with name) in vault. By default, if the note exists, it will create another note but passing `--overwrite` or `--append` can be used to edit the named note. Content can be provided via the `--content` flag or piped through stdin.
 
 ```bash
 # Creates empty note in default obsidian and opens it
@@ -224,6 +243,54 @@ obsidian-cli create "{note-name}" --content "abcde" --open
 # Creates note and opens it in your default editor
 obsidian-cli create "{note-name}" --content "abcde" --open --editor
 
+# Creates note from stdin (piped content)
+echo "Hello World" | obsidian-cli create "{note-name}"
+
+# Pipe file contents into a note
+cat document.txt | obsidian-cli create "{note-name}"
+
+# Pipe command output into a note
+git log --oneline -10 | obsidian-cli create "git-log.md"
+
+# Combine with other tools
+curl -s https://example.com/api | jq '.data' | obsidian-cli create "api-response.md"
+
+```
+
+### Append to Note
+
+Append content to the end of an existing note. Content can be provided as an argument or piped through stdin. Use `@daily` to append to today's daily note.
+
+```bash
+# Append content to a note
+obsidian-cli append "{note-name}" "New content to add"
+
+# Append to daily note
+obsidian-cli append @daily "\n## New Section\nContent here"
+
+# Append from stdin
+echo "piped content" | obsidian-cli append "{note-name}"
+
+# Append to note in a specific vault
+obsidian-cli append "{note-name}" "content" --vault "{vault-name}"
+```
+
+### Edit Note
+
+Replace exact text matches in a note. By default, only replaces the first occurrence. Use `--all` flag to replace all occurrences.
+
+```bash
+# Replace first occurrence of text
+obsidian-cli edit "{note-name}" "old text" "new text"
+
+# Replace all occurrences
+obsidian-cli edit "{note-name}" "old text" "new text" --all
+
+# Edit daily note
+obsidian-cli edit @daily "TODO" "DONE" --all
+
+# Edit note in a specific vault
+obsidian-cli edit "{note-name}" "old" "new" --vault "{vault-name}"
 ```
 
 ### Move / Rename Note
@@ -272,6 +339,35 @@ obsidian-cli frontmatter "{note-name}" --delete --key "draft"
 
 # Use with a specific vault
 obsidian-cli frontmatter "{note-name}" --print --vault "{vault-name}"
+```
+
+### Recipes
+
+Shell pipelines combining obsidian-cli commands with standard Unix tools.
+
+#### In-place Text Replacement
+
+Replace text in a note using the `edit` command:
+
+```bash
+# Replace first occurrence of "old" with "new"
+obsidian-cli edit "note.md" "old" "new"
+
+# Replace all occurrences
+obsidian-cli edit "note.md" "old" "new" --all
+```
+
+Alternatively, use `sed` for more complex regex patterns:
+
+```bash
+# Replace first occurrence
+obsidian-cli create "note.md" --overwrite --content "$(obsidian-cli print "note.md" | sed 's/old/new/')"
+
+# Replace all occurrences (global)
+obsidian-cli create "note.md" --overwrite --content "$(obsidian-cli print "note.md" | sed 's/old/new/g')"
+
+# Use regex patterns
+obsidian-cli create "note.md" --overwrite --content "$(obsidian-cli print "note.md" | sed -E 's/[0-9]+/NUMBER/g')"
 ```
 
 ## Contribution

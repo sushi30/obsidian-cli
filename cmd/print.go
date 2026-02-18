@@ -18,8 +18,12 @@ var printCmd = &cobra.Command{
 	Short:   "Print contents of note",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		noteName := args[0]
 		vault := obsidian.Vault{Name: vaultName}
+		originalNoteName := args[0]
+		noteName, err := ResolveNoteName(&vault, originalNoteName)
+		if err != nil {
+			log.Fatal(err)
+		}
 		note := obsidian.Note{}
 		params := actions.PrintParams{
 			NoteName:        noteName,
@@ -27,7 +31,7 @@ var printCmd = &cobra.Command{
 		}
 		contents, err := actions.PrintNote(&vault, &note, params)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(WrapDailyNoteError(originalNoteName, err))
 		}
 		fmt.Println(contents)
 	},

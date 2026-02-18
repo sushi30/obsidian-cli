@@ -20,8 +20,10 @@ var listCmd = &cobra.Command{
 			targetPath = args[0]
 		}
 
+		fullPath, _ := cmd.Flags().GetBool("full-path")
+
 		vault := obsidian.Vault{Name: vaultName}
-		entries, err := actions.ListEntries(&vault, actions.ListParams{Path: targetPath})
+		entries, err := actions.ListEntries(&vault, actions.ListParams{Path: targetPath, FullPath: fullPath})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -34,5 +36,6 @@ var listCmd = &cobra.Command{
 
 func init() {
 	listCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name")
+	listCmd.Flags().Bool("full-path", false, "display full vault path for each entry")
 	rootCmd.AddCommand(listCmd)
 }

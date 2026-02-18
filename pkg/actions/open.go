@@ -5,14 +5,29 @@ import (
 )
 
 type OpenParams struct {
-	NoteName string
-	Section  string
+	NoteName        string
+	Section         string
+	CreateIfNotExist bool
 }
 
 func OpenNote(vault obsidian.VaultManager, uri obsidian.UriManager, params OpenParams) error {
 	vaultName, err := vault.DefaultName()
 	if err != nil {
 		return err
+	}
+
+	if params.CreateIfNotExist {
+		createUri := uri.Construct(ObsCreateUrl, map[string]string{
+			"vault":     vaultName,
+			"file":      params.NoteName,
+			"append":    "false",
+			"overwrite": "false",
+			"content":   "",
+			"silent":    "true",
+		})
+		if err := uri.Execute(createUri); err != nil {
+			return err
+		}
 	}
 
 	fileParam := params.NoteName

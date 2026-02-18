@@ -1,9 +1,18 @@
 package mocks
 
+import (
+	"time"
+
+	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
+)
+
 type MockVaultOperator struct {
-	DefaultNameErr error
-	PathError      error
-	Name           string
+	DefaultNameErr       error
+	PathError            error
+	DailyNotePatternErr  error
+	Name                 string
+	DailyPattern         string
+	VaultPath            string
 }
 
 func (m *MockVaultOperator) DefaultName() (string, error) {
@@ -24,5 +33,29 @@ func (m *MockVaultOperator) Path() (string, error) {
 	if m.PathError != nil {
 		return "", m.PathError
 	}
+	if m.VaultPath != "" {
+		return m.VaultPath, nil
+	}
 	return "path", nil
+}
+
+func (m *MockVaultOperator) DailyNotePattern() (string, error) {
+	if m.DailyNotePatternErr != nil {
+		return "", m.DailyNotePatternErr
+	}
+	if m.DailyPattern == "" {
+		return "", nil
+	}
+	return m.DailyPattern, nil
+}
+
+func (m *MockVaultOperator) ResolveDailyNote() (string, error) {
+	pattern, err := m.DailyNotePattern()
+	if err != nil {
+		return "", err
+	}
+	if pattern == "" {
+		return "", nil
+	}
+	return obsidian.ExpandDatePattern(pattern, time.Now()), nil
 }
