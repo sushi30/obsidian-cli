@@ -257,6 +257,42 @@ curl -s https://example.com/api | jq '.data' | obsidian-cli create "api-response
 
 ```
 
+### Append to Note
+
+Append content to the end of an existing note. Content can be provided as an argument or piped through stdin. Use `@daily` to append to today's daily note.
+
+```bash
+# Append content to a note
+obsidian-cli append "{note-name}" "New content to add"
+
+# Append to daily note
+obsidian-cli append @daily "\n## New Section\nContent here"
+
+# Append from stdin
+echo "piped content" | obsidian-cli append "{note-name}"
+
+# Append to note in a specific vault
+obsidian-cli append "{note-name}" "content" --vault "{vault-name}"
+```
+
+### Edit Note
+
+Replace exact text matches in a note. By default, only replaces the first occurrence. Use `--all` flag to replace all occurrences.
+
+```bash
+# Replace first occurrence of text
+obsidian-cli edit "{note-name}" "old text" "new text"
+
+# Replace all occurrences
+obsidian-cli edit "{note-name}" "old text" "new text" --all
+
+# Edit daily note
+obsidian-cli edit @daily "TODO" "DONE" --all
+
+# Edit note in a specific vault
+obsidian-cli edit "{note-name}" "old" "new" --vault "{vault-name}"
+```
+
 ### Move / Rename Note
 
 Moves a given note(path from top level of vault) with new name given (top level of vault). If given same path but different name then its treated as a rename. All links inside vault are updated to match new name.
@@ -311,10 +347,20 @@ Shell pipelines combining obsidian-cli commands with standard Unix tools.
 
 #### In-place Text Replacement
 
-Replace text in a note using `sed`:
+Replace text in a note using the `edit` command:
 
 ```bash
 # Replace first occurrence of "old" with "new"
+obsidian-cli edit "note.md" "old" "new"
+
+# Replace all occurrences
+obsidian-cli edit "note.md" "old" "new" --all
+```
+
+Alternatively, use `sed` for more complex regex patterns:
+
+```bash
+# Replace first occurrence
 obsidian-cli create "note.md" --overwrite --content "$(obsidian-cli print "note.md" | sed 's/old/new/')"
 
 # Replace all occurrences (global)

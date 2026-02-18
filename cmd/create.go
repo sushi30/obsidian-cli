@@ -40,10 +40,6 @@ var createNoteCmd = &cobra.Command{
 			noteContent = string(stdinBytes)
 		}
 
-		if noteContent == "" {
-			log.Fatal("No content provided. Use -c flag or pipe from stdin:\n  obs create note -c \"content\"\n  echo \"content\" | obs create note")
-		}
-
 		params := actions.CreateParams{
 			NoteName:        noteName,
 			Content:         noteContent,
