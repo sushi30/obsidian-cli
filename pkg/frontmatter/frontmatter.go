@@ -2,6 +2,7 @@ package frontmatter
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/adrg/frontmatter"
@@ -142,4 +143,85 @@ func parseValue(value string) interface{} {
 
 	// Default to string
 	return value
+}
+
+// MatchesFilter checks if frontmatter matches the given filter criteria.
+// For primitives (string, bool, number), uses equality.
+// For lists, checks if the list contains the filter value.
+func MatchesFilter(fm map[string]interface{}, filters map[string]string) bool {
+	for key, filterValue := range filters {
+		fmValue, exists := fm[key]
+		if !exists {
+			return false
+		}
+
+		// Check if the frontmatter value is a slice (list)
+		switch v := fmValue.(type) {
+		case []interface{}:
+			// For lists, check if any element matches
+			found := false
+			for _, item := range v {
+				if matchesPrimitive(item, filterValue) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return false
+			}
+		case []string:
+			// Handle string slices specifically
+			found := false
+			for _, item := range v {
+				if matchesPrimitive(item, filterValue) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return false
+			}
+		default:
+			// For primitives, use equality
+			if !matchesPrimitive(fmValue, filterValue) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// matchesPrimitive checks if a primitive value matches the filter string.
+func matchesPrimitive(value interface{}, filterValue string) bool {
+	switch v := value.(type) {
+	case string:
+		return v == filterValue
+	case bool:
+		filterBool := filterValue == "true"
+		return v == filterBool
+	case int, int8, int16, int32, int64:
+		return strings.TrimSpace(filterValue) == fmt.Sprintf("%d", v)
+	case float32, float64:
+		return strings.TrimSpace(filterValue) == fmt.Sprintf("%v", v)
+	default:
+		return fmt.Sprintf("%v", v) == filterValue
+	}
+}
+
+// ParseFilters converts a slice of "key=value" strings into a map.
+func ParseFilters(filterStrings []string) (map[string]string, error) {
+	filters := make(map[string]string)
+	for _, filterStr := range filterStrings {
+		parts := strings.SplitN(filterStr, "=", 2)
+		if len(parts) != 2 {
+			return nil, errors.New("invalid filter format: " + filterStr + " (expected key=value)")
+		}
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+		if key == "" {
+			return nil, errors.New("filter key cannot be empty")
+		}
+		filters[key] = value
+	}
+	return filters, nil
 }
