@@ -18,7 +18,7 @@ func TestSearchNotes(t *testing.T) {
 		note := mocks.MockNoteManager{}
 		fuzzyFinder := mocks.MockFuzzyFinder{}
 		// Act
-		err := actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, false)
+		err := actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, false, nil)
 		// Assert
 		assert.NoError(t, err, "Expected no error")
 	})
@@ -32,7 +32,7 @@ func TestSearchNotes(t *testing.T) {
 			FindErr: errors.New("Fuzzy find error"),
 		}
 		// Act
-		err := actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, false)
+		err := actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, false, nil)
 		// Assert
 		assert.Equal(t, err, fuzzyFinder.FindErr)
 	})
@@ -46,7 +46,7 @@ func TestSearchNotes(t *testing.T) {
 		note := mocks.MockNoteManager{}
 		fuzzyFinder := mocks.MockFuzzyFinder{}
 		// Act
-		err := actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, false)
+		err := actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, false, nil)
 		// Assert
 		assert.Equal(t, err, vault.DefaultNameErr)
 	})
@@ -60,7 +60,7 @@ func TestSearchNotes(t *testing.T) {
 		note := mocks.MockNoteManager{}
 		fuzzyFinder := mocks.MockFuzzyFinder{}
 		// Act
-		err := actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, false)
+		err := actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, false, nil)
 		// Assert
 		assert.Equal(t, err, vault.PathError)
 	})
@@ -74,7 +74,7 @@ func TestSearchNotes(t *testing.T) {
 			ExecuteErr: errors.New("Failed to execute URI"),
 		}
 		// Act
-		err := actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, false)
+		err := actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, false, nil)
 		// Assert
 		assert.Equal(t, err, uri.ExecuteErr)
 	})
@@ -96,8 +96,8 @@ func TestSearchNotes(t *testing.T) {
 		os.Setenv("EDITOR", "true")
 
 		// Act - test with editor flag enabled
-		err := actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, true)
-		
+		err := actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, true, nil)
+
 		// Assert - should succeed without calling URI execute
 		assert.NoError(t, err)
 	})
@@ -119,8 +119,8 @@ func TestSearchNotes(t *testing.T) {
 		os.Setenv("EDITOR", "false") // 'false' command always fails
 
 		// Act - test with editor flag enabled
-		err := actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, true)
-		
+		err := actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, true, nil)
+
 		// Assert - should fail due to editor failure
 		assert.Error(t, err)
 	})
