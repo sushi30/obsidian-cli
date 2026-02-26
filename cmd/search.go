@@ -12,8 +12,8 @@ import (
 var searchCmd = &cobra.Command{
 	Use:     "search",
 	Aliases: []string{"s"},
-	Short:   "Fuzzy searches and opens note in vault",
-	Long: `Fuzzy searches and opens note in vault.
+	Short:   "Fuzzy searches and prints note path",
+	Long: `Fuzzy searches and prints note path.
 
 Examples:
   # Search all notes
@@ -28,15 +28,11 @@ Examples:
 	Run: func(cmd *cobra.Command, args []string) {
 		vault := obsidian.Vault{Name: vaultName}
 		note := obsidian.Note{}
-		uri := obsidian.Uri{}
 		fuzzyFinder := obsidian.FuzzyFinder{}
-		useEditor, err := cmd.Flags().GetBool("editor")
-		if err != nil {
-			log.Fatalf("failed to retrieve 'editor' flag: %v", err)
-		}
 		metadataFlags, _ := cmd.Flags().GetStringSlice("meta")
 
 		var metadataFilters map[string]string
+		var err error
 		if len(metadataFlags) > 0 {
 			metadataFilters, err = frontmatter.ParseFilters(metadataFlags)
 			if err != nil {
@@ -44,7 +40,7 @@ Examples:
 			}
 		}
 
-		err = actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, useEditor, metadataFilters)
+		err = actions.SearchNotes(&vault, &note, &fuzzyFinder, metadataFilters)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -53,7 +49,6 @@ Examples:
 
 func init() {
 	searchCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name")
-	searchCmd.Flags().BoolP("editor", "e", false, "open in editor instead of Obsidian")
 	searchCmd.Flags().StringSliceP("meta", "m", []string{}, "filter by frontmatter metadata (key=value)")
 	rootCmd.AddCommand(searchCmd)
 }

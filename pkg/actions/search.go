@@ -9,12 +9,7 @@ import (
 	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
 )
 
-func SearchNotes(vault obsidian.VaultManager, note obsidian.NoteManager, uri obsidian.UriManager, fuzzyFinder obsidian.FuzzyFinderManager, useEditor bool, metadataFilters map[string]string) error {
-	vaultName, err := vault.DefaultName()
-	if err != nil {
-		return err
-	}
-
+func SearchNotes(vault obsidian.VaultManager, note obsidian.NoteManager, fuzzyFinder obsidian.FuzzyFinderManager, metadataFilters map[string]string) error {
 	vaultPath, err := vault.Path()
 	if err != nil {
 		return err
@@ -45,22 +40,7 @@ func SearchNotes(vault obsidian.VaultManager, note obsidian.NoteManager, uri obs
 		return err
 	}
 
-	if useEditor {
-		fmt.Printf("Opening note: %s\n", notes[index])
-		filePath := filepath.Join(vaultPath, notes[index])
-		return obsidian.OpenInEditor(filePath)
-	}
-
-	obsidianUri := uri.Construct(ObsOpenUrl, map[string]string{
-		"file":  notes[index],
-		"vault": vaultName,
-	})
-
-	err = uri.Execute(obsidianUri)
-	if err != nil {
-		return err
-	}
-
+	fmt.Println(notes[index])
 	return nil
 }
 
@@ -70,19 +50,16 @@ func filterNotesByMetadata(vaultPath string, notes []string, filters map[string]
 	for _, note := range notes {
 		fullPath := filepath.Join(vaultPath, note)
 
-		// Read file content
 		content, err := os.ReadFile(fullPath)
 		if err != nil {
 			continue
 		}
 
-		// Parse frontmatter
 		fm, _, err := frontmatter.Parse(string(content))
 		if err != nil || fm == nil {
 			continue
 		}
 
-		// Check if frontmatter matches all filters
 		if frontmatter.MatchesFilter(fm, filters) {
 			filtered = append(filtered, note)
 		}
