@@ -12,7 +12,9 @@
       "Bash(./obsidian-cli list:*)",
       "Bash(./obs-test c:*)",
       "Bash(./build/obsidian c test:*)",
-      "Bash(./build/obsidian print:*)"
+      "Bash(./build/obsidian print:*)",
+      "Bash(git add:*)",
+      "Bash(GIT_EDITOR=true git rebase:*)"
     ]
   }
 }
