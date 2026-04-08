@@ -93,4 +93,19 @@ func TestListEntries(t *testing.T) {
 		_, err := actions.ListEntries(vault, actions.ListParams{})
 		assert.Equal(t, vault.pathErr, err)
 	})
+
+	t.Run("With Where filters returns filtered results", func(t *testing.T) {
+		vaultDir := t.TempDir()
+		assert.NoError(t, os.WriteFile(filepath.Join(vaultDir, "done.md"),
+			[]byte("---\nstatus: done\n---\nContent"), 0644))
+		assert.NoError(t, os.WriteFile(filepath.Join(vaultDir, "draft.md"),
+			[]byte("---\nstatus: draft\n---\nContent"), 0644))
+
+		vault := &vaultStub{path: vaultDir}
+		entries, err := actions.ListEntries(vault, actions.ListParams{
+			Where: map[string]string{"status": "done"},
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"done.md"}, entries)
+	})
 }
