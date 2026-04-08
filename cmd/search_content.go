@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/Yakitrak/obsidian-cli/pkg/actions"
+	"github.com/Yakitrak/obsidian-cli/pkg/frontmatter"
 	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
 
 	"github.com/spf13/cobra"
@@ -20,7 +21,18 @@ var searchContentCmd = &cobra.Command{
 		fuzzyFinder := obsidian.FuzzyFinder{}
 
 		searchTerm := args[0]
-		err := actions.SearchNotesContent(&vault, &note, &fuzzyFinder, searchTerm)
+		metadataFlags, _ := cmd.Flags().GetStringSlice("meta")
+
+		var metadataFilters map[string]string
+		var err error
+		if len(metadataFlags) > 0 {
+			metadataFilters, err = frontmatter.ParseFilters(metadataFlags)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		err = actions.SearchNotesContent(&vault, &note, &fuzzyFinder, searchTerm, metadataFilters)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -29,5 +41,6 @@ var searchContentCmd = &cobra.Command{
 
 func init() {
 	searchContentCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name")
+	searchContentCmd.Flags().StringSliceP("meta", "m", []string{}, "filter by frontmatter metadata (key=value)")
 	rootCmd.AddCommand(searchContentCmd)
 }
