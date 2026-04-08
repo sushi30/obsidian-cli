@@ -2,6 +2,7 @@ package frontmatter
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/adrg/frontmatter"
@@ -113,6 +114,65 @@ func DeleteKey(content, key string) (string, error) {
 	}
 
 	return Delimiter + "\n" + string(fmStr) + Delimiter + "\n" + body, nil
+}
+
+// ParseWhere splits a "key=value,key2=value2" string into a map.
+func ParseWhere(where string) (map[string]string, error) {
+	if where == "" {
+		return map[string]string{}, nil
+	}
+	result := make(map[string]string)
+	pairs := strings.Split(where, ",")
+	for _, pair := range pairs {
+		parts := strings.SplitN(pair, "=", 2)
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid filter pair: %q (expected key=value)", pair)
+		}
+		result[parts[0]] = parts[1]
+	}
+	return result, nil
+}
+
+// MatchesFilters checks if frontmatter matches all given filters (AND logic).
+func MatchesFilters(fm map[string]interface{}, filters map[string]string) bool {
+	if len(filters) == 0 {
+		return true
+	}
+	if fm == nil {
+		return false
+	}
+	for key, filterVal := range filters {
+		val, ok := fm[key]
+		if !ok {
+			return false
+		}
+		switch v := val.(type) {
+		case string:
+			if v != filterVal {
+				return false
+			}
+		case []interface{}:
+			found := false
+			for _, elem := range v {
+				if fmt.Sprintf("%v", elem) == filterVal {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return false
+			}
+		case bool:
+			if fmt.Sprintf("%v", v) != filterVal {
+				return false
+			}
+		default:
+			if fmt.Sprintf("%v", v) != filterVal {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // parseValue attempts to parse the value into appropriate Go types.

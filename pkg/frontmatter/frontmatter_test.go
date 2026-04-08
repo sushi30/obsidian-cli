@@ -138,6 +138,102 @@ func TestSetKey(t *testing.T) {
 	})
 }
 
+func TestParseWhere(t *testing.T) {
+	t.Run("Empty string returns empty map", func(t *testing.T) {
+		result, err := frontmatter.ParseWhere("")
+		assert.NoError(t, err)
+		assert.Empty(t, result)
+	})
+
+	t.Run("Single pair", func(t *testing.T) {
+		result, err := frontmatter.ParseWhere("status=done")
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]string{"status": "done"}, result)
+	})
+
+	t.Run("Multiple pairs", func(t *testing.T) {
+		result, err := frontmatter.ParseWhere("status=done,tags=work")
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]string{"status": "done", "tags": "work"}, result)
+	})
+
+	t.Run("Missing equals returns error", func(t *testing.T) {
+		_, err := frontmatter.ParseWhere("status")
+		assert.Error(t, err)
+	})
+
+	t.Run("Missing equals in second pair returns error", func(t *testing.T) {
+		_, err := frontmatter.ParseWhere("status=done,bad")
+		assert.Error(t, err)
+	})
+}
+
+func TestMatchesFilters(t *testing.T) {
+	t.Run("String exact match", func(t *testing.T) {
+		fm := map[string]interface{}{"status": "done"}
+		assert.True(t, frontmatter.MatchesFilters(fm, map[string]string{"status": "done"}))
+	})
+
+	t.Run("String mismatch", func(t *testing.T) {
+		fm := map[string]interface{}{"status": "draft"}
+		assert.False(t, frontmatter.MatchesFilters(fm, map[string]string{"status": "done"}))
+	})
+
+	t.Run("Array contains match", func(t *testing.T) {
+		fm := map[string]interface{}{"tags": []interface{}{"work", "personal"}}
+		assert.True(t, frontmatter.MatchesFilters(fm, map[string]string{"tags": "work"}))
+	})
+
+	t.Run("Array miss", func(t *testing.T) {
+		fm := map[string]interface{}{"tags": []interface{}{"work", "personal"}}
+		assert.False(t, frontmatter.MatchesFilters(fm, map[string]string{"tags": "finance"}))
+	})
+
+	t.Run("Bool true", func(t *testing.T) {
+		fm := map[string]interface{}{"draft": true}
+		assert.True(t, frontmatter.MatchesFilters(fm, map[string]string{"draft": "true"}))
+	})
+
+	t.Run("Bool false", func(t *testing.T) {
+		fm := map[string]interface{}{"draft": false}
+		assert.True(t, frontmatter.MatchesFilters(fm, map[string]string{"draft": "false"}))
+	})
+
+	t.Run("Int match", func(t *testing.T) {
+		fm := map[string]interface{}{"priority": 1}
+		assert.True(t, frontmatter.MatchesFilters(fm, map[string]string{"priority": "1"}))
+	})
+
+	t.Run("Float match", func(t *testing.T) {
+		fm := map[string]interface{}{"score": 3.5}
+		assert.True(t, frontmatter.MatchesFilters(fm, map[string]string{"score": "3.5"}))
+	})
+
+	t.Run("Missing key returns false", func(t *testing.T) {
+		fm := map[string]interface{}{"status": "done"}
+		assert.False(t, frontmatter.MatchesFilters(fm, map[string]string{"missing": "value"}))
+	})
+
+	t.Run("Multiple filters AND logic", func(t *testing.T) {
+		fm := map[string]interface{}{"status": "done", "tags": []interface{}{"work"}}
+		assert.True(t, frontmatter.MatchesFilters(fm, map[string]string{"status": "done", "tags": "work"}))
+		assert.False(t, frontmatter.MatchesFilters(fm, map[string]string{"status": "done", "tags": "personal"}))
+	})
+
+	t.Run("Nil frontmatter returns false", func(t *testing.T) {
+		assert.False(t, frontmatter.MatchesFilters(nil, map[string]string{"status": "done"}))
+	})
+
+	t.Run("Empty filters returns true", func(t *testing.T) {
+		fm := map[string]interface{}{"status": "done"}
+		assert.True(t, frontmatter.MatchesFilters(fm, map[string]string{}))
+	})
+
+	t.Run("Empty filters with nil frontmatter returns true", func(t *testing.T) {
+		assert.True(t, frontmatter.MatchesFilters(nil, map[string]string{}))
+	})
+}
+
 func TestDeleteKey(t *testing.T) {
 	t.Run("Delete existing key", func(t *testing.T) {
 		content := "---\ntitle: Test\nauthor: John\n---\nBody"
