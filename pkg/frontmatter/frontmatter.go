@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	Delimiter              = "---"
-	NoFrontmatterError     = "note does not contain frontmatter"
+	Delimiter               = "---"
+	NoFrontmatterError      = "note does not contain frontmatter"
 	InvalidFrontmatterError = "frontmatter contains invalid YAML"
 )
 

@@ -7,7 +7,7 @@ import (
 	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
 )
 
-func SearchNotesContent(vault obsidian.VaultManager, note obsidian.NoteManager, uri obsidian.UriManager, fuzzyFinder obsidian.FuzzyFinderManager, searchTerm string, useEditor bool) error {
+func SearchNotesContent(vault obsidian.VaultManager, note obsidian.NoteManager, uri obsidian.UriManager, fuzzyFinder obsidian.FuzzyFinderManager, searchTerm string, useEditor bool, where map[string]string) error {
 	vaultName, err := vault.DefaultName()
 	if err != nil {
 		return err
@@ -21,6 +21,35 @@ func SearchNotesContent(vault obsidian.VaultManager, note obsidian.NoteManager, 
 	matches, err := note.SearchNotesWithSnippets(vaultPath, searchTerm)
 	if err != nil {
 		return err
+	}
+
+	if len(where) > 0 {
+		// Collect unique file paths
+		uniquePaths := make(map[string]bool)
+		for _, m := range matches {
+			uniquePaths[m.FilePath] = true
+		}
+		pathList := make([]string, 0, len(uniquePaths))
+		for p := range uniquePaths {
+			pathList = append(pathList, p)
+		}
+
+		filtered, err := obsidian.FilterNotesByFrontmatter(vaultPath, pathList, where)
+		if err != nil {
+			return err
+		}
+		allowedSet := make(map[string]bool, len(filtered))
+		for _, p := range filtered {
+			allowedSet[p] = true
+		}
+
+		var filteredMatches []obsidian.NoteMatch
+		for _, m := range matches {
+			if allowedSet[m.FilePath] {
+				filteredMatches = append(filteredMatches, m)
+			}
+		}
+		matches = filteredMatches
 	}
 
 	if len(matches) == 0 {

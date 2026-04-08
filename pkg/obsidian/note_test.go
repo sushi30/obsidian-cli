@@ -779,3 +779,40 @@ func TestFindBacklinks(t *testing.T) {
 		assert.Contains(t, matches[0].FilePath, "nested.md")
 	})
 }
+
+func TestFilterNotesByFrontmatter(t *testing.T) {
+	t.Run("Filters matching notes from list", func(t *testing.T) {
+		vaultDir := t.TempDir()
+		assert.NoError(t, os.WriteFile(filepath.Join(vaultDir, "done.md"),
+			[]byte("---\nstatus: done\n---\nContent"), 0644))
+		assert.NoError(t, os.WriteFile(filepath.Join(vaultDir, "draft.md"),
+			[]byte("---\nstatus: draft\n---\nContent"), 0644))
+
+		paths := []string{"done.md", "draft.md"}
+		result, err := obsidian.FilterNotesByFrontmatter(vaultDir, paths, map[string]string{"status": "done"})
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"done.md"}, result)
+	})
+
+	t.Run("Returns empty when nothing matches", func(t *testing.T) {
+		vaultDir := t.TempDir()
+		assert.NoError(t, os.WriteFile(filepath.Join(vaultDir, "draft.md"),
+			[]byte("---\nstatus: draft\n---\nContent"), 0644))
+
+		result, err := obsidian.FilterNotesByFrontmatter(vaultDir, []string{"draft.md"}, map[string]string{"status": "done"})
+		assert.NoError(t, err)
+		assert.Empty(t, result)
+	})
+
+	t.Run("Handles notes without frontmatter", func(t *testing.T) {
+		vaultDir := t.TempDir()
+		assert.NoError(t, os.WriteFile(filepath.Join(vaultDir, "plain.md"),
+			[]byte("No frontmatter here"), 0644))
+		assert.NoError(t, os.WriteFile(filepath.Join(vaultDir, "done.md"),
+			[]byte("---\nstatus: done\n---\nContent"), 0644))
+
+		result, err := obsidian.FilterNotesByFrontmatter(vaultDir, []string{"plain.md", "done.md"}, map[string]string{"status": "done"})
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"done.md"}, result)
+	})
+}

@@ -1,9 +1,11 @@
 package cmd
 
 import (
-	"github.com/Yakitrak/obsidian-cli/pkg/actions"
-	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
 	"log"
+
+	"github.com/Yakitrak/obsidian-cli/pkg/actions"
+	"github.com/Yakitrak/obsidian-cli/pkg/frontmatter"
+	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
 
 	"github.com/spf13/cobra"
 )
@@ -22,7 +24,15 @@ var searchCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("failed to retrieve 'editor' flag: %v", err)
 		}
-		err = actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, useEditor)
+		whereStr, err := cmd.Flags().GetString("where")
+		if err != nil {
+			log.Fatalf("failed to retrieve 'where' flag: %v", err)
+		}
+		where, err := frontmatter.ParseWhere(whereStr)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = actions.SearchNotes(&vault, &note, &uri, &fuzzyFinder, useEditor, where)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -32,5 +42,6 @@ var searchCmd = &cobra.Command{
 func init() {
 	searchCmd.Flags().StringVarP(&vaultName, "vault", "v", "", "vault name")
 	searchCmd.Flags().BoolP("editor", "e", false, "open in editor instead of Obsidian")
+	searchCmd.Flags().StringP("where", "w", "", "filter by frontmatter key=value pairs (comma-separated)")
 	rootCmd.AddCommand(searchCmd)
 }

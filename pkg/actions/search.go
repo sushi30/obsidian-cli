@@ -2,11 +2,11 @@ package actions
 
 import (
 	"fmt"
-	"path/filepath"
 	"github.com/Yakitrak/obsidian-cli/pkg/obsidian"
+	"path/filepath"
 )
 
-func SearchNotes(vault obsidian.VaultManager, note obsidian.NoteManager, uri obsidian.UriManager, fuzzyFinder obsidian.FuzzyFinderManager, useEditor bool) error {
+func SearchNotes(vault obsidian.VaultManager, note obsidian.NoteManager, uri obsidian.UriManager, fuzzyFinder obsidian.FuzzyFinderManager, useEditor bool, where map[string]string) error {
 	vaultName, err := vault.DefaultName()
 	if err != nil {
 		return err
@@ -20,6 +20,13 @@ func SearchNotes(vault obsidian.VaultManager, note obsidian.NoteManager, uri obs
 	notes, err := note.GetNotesList(vaultPath)
 	if err != nil {
 		return err
+	}
+
+	if len(where) > 0 {
+		notes, err = obsidian.FilterNotesByFrontmatter(vaultPath, notes, where)
+		if err != nil {
+			return err
+		}
 	}
 
 	index, err := fuzzyFinder.Find(notes, func(i int) string {

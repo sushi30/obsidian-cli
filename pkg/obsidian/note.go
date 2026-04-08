@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/Yakitrak/obsidian-cli/pkg/frontmatter"
 )
 
 type Note struct {
@@ -276,6 +278,29 @@ func (m *Note) SearchNotesWithSnippets(vaultPath string, query string) ([]NoteMa
 }
 
 const maxFileSizeBytes = 10 * 1024 * 1024 // 10MB
+
+// FilterNotesByFrontmatter returns only paths whose frontmatter matches all filters.
+func FilterNotesByFrontmatter(vaultPath string, notePaths []string, filters map[string]string) ([]string, error) {
+	var result []string
+	for _, p := range notePaths {
+		content, err := os.ReadFile(filepath.Join(vaultPath, p))
+		if err != nil {
+			continue
+		}
+		text := string(content)
+		if !frontmatter.HasFrontmatter(text) {
+			continue
+		}
+		fm, _, err := frontmatter.Parse(text)
+		if err != nil {
+			continue
+		}
+		if frontmatter.MatchesFilters(fm, filters) {
+			result = append(result, p)
+		}
+	}
+	return result, nil
+}
 
 // containsAnyPattern checks if content contains any of the patterns (case-insensitive).
 func containsAnyPattern(contentLower []byte, patterns [][]byte) bool {
