@@ -2,6 +2,8 @@ package actions_test
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/Yakitrak/obsidian-cli/mocks"
@@ -10,9 +12,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type vaultStubForSearch struct {
+	path string
+}
+
+func (v *vaultStubForSearch) DefaultName() (string, error)      { return "test-vault", nil }
+func (v *vaultStubForSearch) SetDefaultName(_ string) error     { return nil }
+func (v *vaultStubForSearch) Path() (string, error)             { return v.path, nil }
+func (v *vaultStubForSearch) DailyNotePattern() (string, error) { return "", nil }
+func (v *vaultStubForSearch) ResolveDailyNote() (string, error) { return "", nil }
+
 type CustomMockNoteForSingleMatch struct{}
 
-func (m *CustomMockNoteForSingleMatch) Delete(string) error                       { return nil }
+func (m *CustomMockNoteForSingleMatch) Delete(string) error                        { return nil }
 func (m *CustomMockNoteForSingleMatch) Move(string, string) error                  { return nil }
 func (m *CustomMockNoteForSingleMatch) UpdateLinks(string, string, string) error   { return nil }
 func (m *CustomMockNoteForSingleMatch) GetContents(string, string) (string, error) { return "", nil }
@@ -33,7 +45,7 @@ func TestSearchNotesContent(t *testing.T) {
 		note := mocks.MockNoteManager{}
 		fuzzyFinder := mocks.MockFuzzyFinder{}
 
-		err := actions.SearchNotesContent(&vault, &note, &fuzzyFinder, "test")
+		err := actions.SearchNotesContent(&vault, &note, &fuzzyFinder, "test", nil)
 		assert.NoError(t, err)
 	})
 
@@ -42,7 +54,7 @@ func TestSearchNotesContent(t *testing.T) {
 		note := &CustomMockNoteForSingleMatch{}
 		fuzzyFinder := mocks.MockFuzzyFinder{}
 
-		err := actions.SearchNotesContent(&vault, note, &fuzzyFinder, "test")
+		err := actions.SearchNotesContent(&vault, note, &fuzzyFinder, "test", nil)
 		assert.NoError(t, err)
 	})
 
@@ -51,7 +63,7 @@ func TestSearchNotesContent(t *testing.T) {
 		note := mocks.MockNoteManager{NoMatches: true}
 		fuzzyFinder := mocks.MockFuzzyFinder{}
 
-		err := actions.SearchNotesContent(&vault, &note, &fuzzyFinder, "nonexistent")
+		err := actions.SearchNotesContent(&vault, &note, &fuzzyFinder, "nonexistent", nil)
 		assert.NoError(t, err)
 	})
 
@@ -62,7 +74,7 @@ func TestSearchNotesContent(t *testing.T) {
 		}
 		fuzzyFinder := mocks.MockFuzzyFinder{}
 
-		err := actions.SearchNotesContent(&vault, &note, &fuzzyFinder, "test")
+		err := actions.SearchNotesContent(&vault, &note, &fuzzyFinder, "test", nil)
 		assert.Error(t, err)
 	})
 
@@ -73,7 +85,7 @@ func TestSearchNotesContent(t *testing.T) {
 		note := mocks.MockNoteManager{}
 		fuzzyFinder := mocks.MockFuzzyFinder{}
 
-		err := actions.SearchNotesContent(&vault, &note, &fuzzyFinder, "test")
+		err := actions.SearchNotesContent(&vault, &note, &fuzzyFinder, "test", nil)
 		assert.Error(t, err)
 	})
 
@@ -84,7 +96,23 @@ func TestSearchNotesContent(t *testing.T) {
 			FindErr: errors.New("fuzzy finder error"),
 		}
 
-		err := actions.SearchNotesContent(&vault, &note, &fuzzyFinder, "test")
+		err := actions.SearchNotesContent(&vault, &note, &fuzzyFinder, "test", nil)
 		assert.Error(t, err)
+	})
+
+	t.Run("Metadata filter excludes non-matching notes", func(t *testing.T) {
+		vaultDir := t.TempDir()
+		os.WriteFile(filepath.Join(vaultDir, "match.md"),
+			[]byte("---\nstatus: done\n---\nhas the keyword"), 0644)
+		os.WriteFile(filepath.Join(vaultDir, "nomatch.md"),
+			[]byte("---\nstatus: draft\n---\nhas the keyword"), 0644)
+
+		vault := &vaultStubForSearch{path: vaultDir}
+		note := &obsidian.Note{}
+		fuzzyFinder := mocks.MockFuzzyFinder{}
+
+		err := actions.SearchNotesContent(vault, note, &fuzzyFinder, "keyword",
+			map[string]string{"status": "done"})
+		assert.NoError(t, err)
 	})
 }
