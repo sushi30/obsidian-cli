@@ -4,5 +4,7 @@ stages:
 test:
   stage: test
   image: golang:1.26
+  before_script:
+    - useradd -m testuser
   script:
-    - go test ./...
+    - su testuser -c "go test ./..."
