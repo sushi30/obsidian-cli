@@ -1,6 +1,6 @@
 module github.com/Yakitrak/obsidian-cli
 
-go 1.19
+go 1.26
 
 require (
 	github.com/ktr0731/go-fuzzyfinder v0.8.0
