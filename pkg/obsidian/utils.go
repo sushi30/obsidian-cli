@@ -151,7 +151,7 @@ func OpenInEditor(filePath string) error {
 	// Parse editor command to handle GUI editors that need wait flags
 	var cmd *exec.Cmd
 	editorLower := strings.ToLower(filepath.Base(editor))
-	
+
 	switch {
 	case strings.Contains(editorLower, "code") || strings.Contains(editorLower, "vscode"):
 		// VSCode needs --wait flag to block
