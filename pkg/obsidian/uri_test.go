@@ -22,6 +22,7 @@ func TestUriConstruct(t *testing.T) {
 		{"Two keys", map[string]string{"key1": "value1", "key2": "value2"}, map[string]string{"key1": "value1", "key2": "value2"}},
 		{"Empty value", map[string]string{"key": ""}, nil},
 		{"Mix of empty and non-empty values", map[string]string{"key1": "value1", "key2": ""}, map[string]string{"key1": "value1"}},
+		{"Value with equals sign", map[string]string{"content": "x = 1"}, map[string]string{"content": "x = 1"}},
 	}
 
 	for _, test := range tests {
@@ -45,6 +46,31 @@ func TestUriConstruct(t *testing.T) {
 					}
 				}
 			}
+		})
+	}
+}
+
+func TestUriConstructEncodesQueryUnsafeChars(t *testing.T) {
+	uriManager := obsidian.Uri{}
+
+	tests := []struct {
+		name  string
+		value string
+		must  string // substring that must NOT appear unescaped in the query string
+	}{
+		{"equals sign", "x = 1", "x = 1"},
+		{"ampersand", "a & b", "a & b"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := uriManager.Construct("obsidian://new", map[string]string{"content": tt.value})
+			query := strings.SplitN(got, "?", 2)[1]
+			assert.NotContains(t, query, tt.must, "query-unsafe chars must be percent-encoded")
+			// Round-trip: ParseQuery must recover the original value
+			parsed, err := url.ParseQuery(query)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.value, parsed.Get("content"))
 		})
 	}
 }

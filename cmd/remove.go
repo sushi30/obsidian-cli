@@ -9,9 +9,9 @@ import (
 )
 
 var deleteCmd = &cobra.Command{
-	Use:     "delete",
-	Aliases: []string{"d"},
-	Short:   "Delete note in vault",
+	Use:     "remove",
+	Aliases: []string{"rm"},
+	Short:   "Remove note from vault",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		vault := obsidian.Vault{Name: vaultName}
